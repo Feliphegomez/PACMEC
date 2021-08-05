@@ -3477,7 +3477,7 @@ namespace Tqdev\PhpCrudApi\Cache {
                 $this->path = $path;
                 $this->segments = explode(',', $segments);
             }
-            if (file_exists($this->path) && is_dir($this->path)) {
+            if (@file_exists($this->path) && is_dir($this->path)) {
                 $this->clean($this->path, array_filter($this->segments), strlen(md5('')), false);
             }
         }
@@ -3500,8 +3500,8 @@ namespace Tqdev\PhpCrudApi\Cache {
         {
             $filename = $this->getFileName($key);
             $dirname = dirname($filename);
-            if (!file_exists($dirname)) {
-                if (!mkdir($dirname, 0755, true)) {
+            if (!@file_exists($dirname)) {
+                if (!@mkdir($dirname, 0755, true)) {
                     return false;
                 }
             }
@@ -3553,7 +3553,7 @@ namespace Tqdev\PhpCrudApi\Cache {
         public function get(string $key): string
         {
             $filename = $this->getFileName($key);
-            if (!file_exists($filename)) {
+            if (!@file_exists($filename)) {
                 return '';
             }
             $string = $this->getString($filename);
@@ -11881,13 +11881,10 @@ namespace Tqdev\PhpCrudApi {
   #require_once "pacmec-config.php";
   if (!defined('PACMEC_PATH')) define('PACMEC_PATH', __DIR__ . "/.pacmec");
   // putenv('TMPDIR=' . PACMEC_PATH . "/.tmp");
-
   use Tqdev\PhpCrudApi\Api;
   use Tqdev\PhpCrudApi\Config;
   use Tqdev\PhpCrudApi\RequestFactory;
   use Tqdev\PhpCrudApi\ResponseUtils;
-
-
   try {
     require_once (is_file(PACMEC_PATH . '/.prv/settings.php') && file_exists(PACMEC_PATH . '/.prv/settings.php')) ? PACMEC_PATH . '/.prv/settings.php' : PACMEC_PATH . '/autosettings.php';
     require_once PACMEC_PATH . '/includes.php';

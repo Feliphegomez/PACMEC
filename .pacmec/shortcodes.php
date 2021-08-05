@@ -2,7 +2,7 @@
 /**
  *
  * @package    PACMEC
- * @category   System
+ * @category   Shortcodes
  * @copyright  2020-2021 FelipheGomez
  * @author     FelipheGomez <feliphegomez@pm.me>
  * @license    license.txt

@@ -7,6 +7,7 @@
  * @author     FelipheGomez <feliphegomez@pm.me>
  * @license    license.txt
  * @version    1.0.1
+ *
  */
 
 function pacmec_meta_head(){

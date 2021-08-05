@@ -2,7 +2,7 @@
 /**
  *
  * @package    PACMEC
- * @category   System
+ * @category   Session
  * @copyright  2020-2021 FelipheGomez
  * @author     FelipheGomez <feliphegomez@pm.me>
  * @license    license.txt
@@ -20,7 +20,7 @@ class Session
  	public  $user               = null;
   public  $sites              = [];
  	public  $permission_group   = null;
-  public  $tasks             = [];
+  public  $tasks              = [];
   public  $payments           = [];
  	public  $permissions_items  = [];
  	public  $permissions        = [];
@@ -224,23 +224,43 @@ class Session
  			}
  		}
     // Cargar Sitios del usuario
-
+    $this->sites = \PACMEC\System\Site::getByMe();
+    /*
     $users_sites = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('users_sites')}` WHERE `user` IN (?)", [$this->user->id]);
     $sites = [];
     if($users_sites !== false){
       foreach ($users_sites as $ai => $site) {
         $site->permissions = [];
-
+        $permissions = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT E.*
+          FROM `{$GLOBALS['PACMEC']['DB']->getTableName('permissions')}` D
+          JOIN `{$GLOBALS['PACMEC']['DB']->getTableName('permissions_items')}` E
+          ON E.`id` = D.`permission`
+          WHERE D.`group` IN (?)", [$site->role]);
+        if($permissions !== false && count($permissions) > 0){
+          foreach($permissions as $perm){
+            $siteObj->permissions[] = $perm;
+            // $this->add_permission($perm->tag, $perm);
+          }
+        }
         $siteObj = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('sites')}` WHERE `domain` IN (?)", [$site->host]);
         if($siteObj !== false){
           $siteObj->hash = base64_encode($site->id);
           $siteObj->role = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('permissions_group')}` WHERE `id` IN (?)", [$site->role]);
+          $siteObj->options = [];
+          $siteObj->plugins = [];
           $siteObj->permissions = [];
           $siteObj->orders_status = [];
           $siteObj->orders = [];
           $siteObj->tasks = [];
           $siteObj->tasks_activity = [];
           $siteObj->payments = [];
+
+          $options = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT `O`.* FROM `{$GLOBALS['PACMEC']['DB']->getTableName('options')}` `O` WHERE `O`.`host` IN ('*', ?)", [$siteObj->domain]);
+          if($options !== false){
+            foreach ($options as $option) $siteObj->options[$option->option_name] = $option->option_value;
+          }
+
+          $siteObj->plugins = explode(',', $siteObj->options['plugins_activated']);
 
           $orders_statuses = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT `O`.`id` FROM `{$GLOBALS['PACMEC']['DB']->getTableName('orders')}` `O` WHERE `O`.`host` IN (?)", [$siteObj->domain]);
           if($orders_statuses !== false){
@@ -281,57 +301,21 @@ class Session
             }
           }
         }
-
-        $permissions = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT E.*
-          FROM `{$GLOBALS['PACMEC']['DB']->getTableName('permissions')}` D
-          JOIN `{$GLOBALS['PACMEC']['DB']->getTableName('permissions_items')}` E
-          ON E.`id` = D.`permission`
-          WHERE D.`group` IN (?)", [$site->role]);
-        if($permissions !== false && count($permissions) > 0){
-          foreach($permissions as $perm){
-            $siteObj->permissions[] = $perm;
-            // $this->add_permission($perm->tag, $perm);
-          }
-        }
-
-        /*
-        $sql2 = "SELECT
-        	`O`.*
-          , GROUP_CONCAT(`O`.`id`) AS `orders`
-        	, `OS`.`name` AS `status_name`
-        	, COUNT(`OI`.`id`) AS `items`
-        	, SUM(case when `OI`.`type` = 'product' then 1 else 0 end) AS `products`
-        	, SUM(case when `OI`.`type` = 'service' then 1 else 0 end) AS `services`
-        	, SUM(`OI`.`quantity`) AS `items_sum`
-        	, SUM(case when `OI`.`type` = 'product' then `OI`.`quantity` else 0 end) AS `products_sum`
-        	, SUM(case when `OI`.`type` = 'service' then `OI`.`quantity` else 0 end) AS `services_sum`
-        	, SUM(`OI`.`quantity`*`OI`.`unit_price`) AS `items_subtotal`
-        	, SUM(case when `OI`.`type` = 'product' then `OI`.`quantity`*`OI`.`unit_price` else 0 end) AS `products_subtotal`
-        	, SUM(case when `OI`.`type` = 'service' then `OI`.`quantity`*`OI`.`unit_price` else 0 end) AS `services_subtotal`
-        	, SUM(case when `OI`.`type` = 'discount' then (`OI`.`quantity`*`OI`.`unit_price`) else 0 end) AS `discounts_subtotal`
-        	, SUM(case when `OI`.`type` = 'coupon' then `OI`.`quantity`*`OI`.`unit_price` else 0 end) AS `coupons_subtotal`
-        	, GROUP_CONCAT(`OT`.`id`) AS `tasks`
-        FROM `px_orders` AS `O`
-        	LEFT JOIN `px_orders_items` AS `OI` ON `OI`.`order_id` = `O`.`id`
-        	LEFT JOIN `px_orders_status` AS `OS` ON `OS`.`id` = `O`.`status`
-        	LEFT JOIN `px_orders_tasks` AS `OT` ON `OT`.`order_id` = `O`.`id`
-        WHERE `O`.`host` IN (?)
-        GROUP BY `O`.`id`, `OT`.`id`
-        ORDER BY `created` DESC";
-        */
-
-
         $sites[] = $siteObj;
       }
     }
-
     $this->sites = $sites;
+    */
+
 
     $this->permissions = array_keys($this->permissions_items);
     foreach (\PACMEC\System\Notifications::get_all_by_user_id(\userID(), false) as $item) {
       # $this->notifications[] = $this->add_alert($item->message, $item->title, $item->host, strtotime($item->created), $item->id);
       $this->notifications[] = $item;
     }
+
+
+
     foreach ($this as $k => $v) {
       $_SESSION[$k] = is_object($v) ? (Array) $v : $v;
     }

@@ -1,5 +1,10 @@
 <?php
 /*
+ * Copyright (c) 2021 FelipheGomez and Authors includes
+ * Author: FelipheGomez <feliphegomez@pm.me>
+ * Created: 2021-Jul-30 -5
+ * Function: Adaptation PACMEC
+ *
  * Copyright (c) 2009 by Jeff Weisberg
  * Author: Jeff Weisberg
  * Created: 2009-Jun-22 16:44 (EDT)

@@ -179,6 +179,7 @@ function add_action(string $tag, $function_to_add, int $priority = 50, string $i
 }
 
 /**
+ *
  * Add hook for shortcode tag.
  *
  * <p>
@@ -261,6 +262,7 @@ function shortcode_atts($pairs, $atts, $shortcode = ''): array
 }
 
 /**
+ *
  * Adds Hooks to a function or method to a specific filter action.
  *
  * @param    string              $tag             <p>
@@ -738,7 +740,19 @@ function get_footer()
 
 function plugin_is_active($plugin_slug)
 {
-  return (in_array($plugin_slug, array_keys($GLOBALS['PACMEC']['plugins']))) && (in_array($plugin_slug, explode(',', infosite("plugins_activated"))));
+  return (
+    in_array(
+      $plugin_slug
+      , array_keys(
+        $GLOBALS['PACMEC']['plugins']
+      )
+    )
+  ) && (
+    in_array(
+      $plugin_slug
+      , explode(',', infosite("plugins_activated"))
+    )
+  );
 }
 
 

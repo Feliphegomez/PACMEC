@@ -8,6 +8,11 @@
  * @license    license.txt
  * @version    1.0.1
  */
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 define('DB_port', '3306');                                   // Base de datos: Puerto de conexion (Def: 3306)
 define('DB_driver', 'mysql');                                // Base de datos: Controlador de la conexion (Def: mysql)
 define('DB_host', 'localhost');                              // Base de datos: Servidor/Host de conexion (Def: localhost)

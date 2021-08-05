@@ -81,8 +81,10 @@ orders_close=                               Ords completas
 orders_closed=                              Ords cerradas
 orders_sales=                               Ords negoc.
 orders_open=                                Ords abiertas
+orders_opened=                              Ords abiertas
 orders_pending=                             Ords pdtes
 orders_tx=                                  TXs
+last_orders=                                Ult. Ordenes
 
 webmail_slug=                               correo
 

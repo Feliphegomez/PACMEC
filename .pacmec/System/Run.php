@@ -2,7 +2,7 @@
 /**
  *
  * @package    PACMEC
- * @category   System
+ * @category   Run
  * @copyright  2020-2021 FelipheGomez
  * @author     FelipheGomez <feliphegomez@pm.me>
  * @license    license.txt
@@ -16,7 +16,6 @@ class Run
   public function __construct()
   {
     require_once PACMEC_PATH . '/functions.php';
-
     Self::pacmec_create_globals_vars();
     Self::pacmec_checker_domain();
     Self::pacmec_init_setup();
@@ -110,8 +109,8 @@ class Run
       $sql = "SELECT * from `INFORMATION_SCHEMA`.`TABLES` where (`information_schema`.`TABLES`.`TABLE_SCHEMA` = database())";
       $database_info = $PACMEC['DB']->get_tables_info();
       $tables_ckecks = [
-        'apu_items'            => false,
-        'aui_items'            => false,
+        # 'apu_items'            => false,
+        # 'aui_items'            => false,
         'affiliates'           => false,
         'categories'           => false,
         'clients'              => false,
@@ -120,26 +119,27 @@ class Run
         'emails_boxes'         => false,
         'emails_templates'     => false,
         'emails_users'         => false,
-        'expenses'             => false,
+        # 'expenses'             => false,
         'geo_addresses'        => false,
         'geo_cities'           => false,
         'geo_countries'        => false,
         'glossary'             => false,
         'glossary_txt'         => false,
         'memberships'          => false,
-        'memberships_features' => false,
-        'memberships_services' => false,
+        # 'memberships_features' => false,
+        # 'memberships_services' => false,
         'menus'                => false,
         'menus_elements'       => false,
         'notifications'        => false,
         'options'              => false,
         'orders'               => false,
-        'orders_apu'           => false,
-        'orders_aui'           => false,
+        # 'orders_apu'           => false,
+        # 'orders_aui'           => false,
         'orders_geo_addresses' => false,
         'orders_items'         => false,
         'orders_status'        => false,
-        'orders_tasks'         => false,
+        'tasks'                => false,
+        'tasks_activity'       => false,
         'orders_tx'            => false,
         'payments'             => false,
         'permanents_links'     => false,
@@ -155,11 +155,11 @@ class Run
         'products_pictures'    => false,
         'routes'               => false,
         'services'             => false,
-        'services_apu'         => false,
-        'services_aui'         => false,
-        'services_categories'  => false,
-        'services_features'    => false,
-        'services_filters'     => false,
+        # 'services_apu'         => false,
+        # 'services_aui'         => false,
+        # 'services_categories'  => false,
+        # 'services_features'    => false,
+        # 'services_filters'     => false,
         'services_pictures'    => false,
         'sessions'             => false,
         'shoppings_carts'      => false,
@@ -406,7 +406,21 @@ class Run
     // add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/js/sdk.js"."?&cache=".rand(),   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
 
     add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/bootstrap-tagsinput/dist/bootstrap-tagsinput.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/inputmask/inputmask.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+    add_scripts_head(folder_theme("zeiss")."/assets/scripts/jquery.min.js", ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.8, true);
+
     add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/tinymce/tinymce.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+    // add_scripts_head("https://cdn.tiny.cloud/1/h8v4hy380enoounirlpqjx93d3v9sz4191i9izx8lvhcczw4/tinymce/5/tinymce.min.js",   ["type"=>"text/javascript", "referrerpolicy"=>"origin"], 1, false);
+
+    // add_scripts_head("https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js",   ["referrerpolicy"=>"origin"], 1, false);
+    // add_scripts_head("https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js",   ["referrerpolicy"=>"origin"], 1, false);
+
+    //add_scripts_foot(folder_theme("zeiss")."/assets/scripts/jquery.min.js", ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.8, true);
+
 
     #add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/Metro-UI-CSS/build/css/metro-all.min.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
     #add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/Metro-UI-CSS/build/js/metro.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
@@ -415,13 +429,15 @@ class Run
 
     if (infosite('grapesjs_enable')==true) {
       add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/css/grapes.min.css"."?&cache=".rand(),  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-      add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-webpage/dist/grapesjs-preset-webpage.min.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-      add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
+      # add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-webpage/grapesjs-preset-webpage.min.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
+      add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-newsletter/grapesjs-preset-newsletter.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
 
       add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/grapes.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-webpage/dist/grapesjs-preset-webpage.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      //add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-plugin-ckeditor/dist/grapesjs-plugin-ckeditor.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+      # add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-webpage/grapesjs-preset-webpage.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-newsletter/grapesjs-preset-newsletter.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+      //add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-plugin-ckeditor/grapesjs-plugin-ckeditor.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-blocks-basic/grapesjs-blocks-basic.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+      # add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-blocks-bootstrap4/grapesjs-blocks-bootstrap4.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
 
     }
   }
@@ -438,7 +454,7 @@ class Run
       if(isset($data['controller']))
       {
         $controllerObj = \cargarControlador($data["controller"]);
-        lanzarAccion($controllerObj);
+        \lanzarAccion($controllerObj);
       }
       else
       {

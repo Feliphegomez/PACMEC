@@ -8,7 +8,9 @@
  * @license    license.txt
  * @version    1.0.1
  */
+
 namespace PACMEC;
+
 class Autoload
 {
   public function __construct()

@@ -2,12 +2,13 @@
 /**
  *
  * @package    PACMEC
- * @category   System
- * @copyright  2020-2021 FelipheGomez & FelipheGomez CO
- * @author     FelipheGomez <feliphegomez@gmail.com>
+ * @category   Rating
+ * @copyright  2020-2021 FelipheGomez
+ * @author     FelipheGomez <feliphegomez@pm.me>
  * @license    license.txt
- * @version    0.0.1
+ * @version    1.0.1
  */
+
 namespace PACMEC\System;
 
 class Ratign extends \PACMEC\System\BaseRecords

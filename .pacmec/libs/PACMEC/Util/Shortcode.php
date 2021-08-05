@@ -1,11 +1,14 @@
 <?php
 /**
  *
- * @author     FelipheGomez <feliphegomez@gmail.com>
  * @package    PACMEC
- * @category   Util
+ * @category   Shortcode
+ * @copyright  2020-2021 FelipheGomez
+ * @author     FelipheGomez <feliphegomez@pm.me>
+ * @license    license.txt
  * @version    1.0.1
  */
+
 namespace PACMEC\Util;
 
 class Shortcode

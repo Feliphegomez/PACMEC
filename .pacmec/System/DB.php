@@ -6,18 +6,26 @@
  * @copyright  2020-2021 FelipheGomez
  * @author     FelipheGomez <feliphegomez@pm.me>
  * @license    license.txt
- * @version    0.0.1
+ * @version    1.0.1
  */
 
 namespace PACMEC\System;
 
 Class DB {
-  private $driver, $adapter, $host, $port, $user, $pass, $database, $charset, $prefix;
+  private $driver
+    , $adapter
+    , $host
+    , $port
+    , $user
+    , $pass
+    , $database
+    , $charset
+    , $prefix;
   private $tables = [];
   private $models = [];
   private $views = [];
 
-  public function __construct() 
+  public function __construct()
   {
 		$this->driver           = DB_driver;
 		$this->port             = DB_port;

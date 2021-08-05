@@ -25,10 +25,7 @@ function pacmec_ERP_activation()
         throw new \Exception("Falta la tbl: {$tbl}", 1);
       }
     }
-    if(!isGuest()){
-      $meinfo = meinfo();
-      $GLOBALS['PACMEC']['session']->emails_boxes = \PACMEC\ERP\eMailsBoxes::load_users_by('user_id', $meinfo->user->id);
-    }
+    $GLOBALS['PACMEC']['session']->emails_boxes = \PACMEC\ERP\eMailsBoxes::load_users_by('user_id', \userID());
   } catch (\Exception $e) {
     echo $e->getMessage();
     exit;

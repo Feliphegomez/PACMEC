@@ -1,12 +1,12 @@
 <?php
-
-/** PHPExcel root directory */
-if (!defined('PHPEXCEL_ROOT')) {
-    define('PHPEXCEL_ROOT', dirname(__FILE__) . '/');
-    require(PHPEXCEL_ROOT . 'PHPExcel/Autoloader.php');
-}
-
 /**
+ *
+ * @author     FelipheGomez <feliphegomez@pm.me>
+ * @package    PACMEC
+ * @category   Libs
+ * @copyright  2021 FelipheGomez
+ * @version    1.0.1
+ *
  * PHPExcel
  *
  * Copyright (c) 2006 - 2015 PHPExcel
@@ -31,6 +31,13 @@ if (!defined('PHPEXCEL_ROOT')) {
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt    LGPL
  * @version    ##VERSION##, ##DATE##
  */
+
+/** PHPExcel root directory */
+if (!defined('PHPEXCEL_ROOT')) {
+   define('PHPEXCEL_ROOT', dirname(__FILE__) . '/');
+   require(PHPEXCEL_ROOT . 'PHPExcel/Autoloader.php');
+}
+
 class PHPExcel
 {
     /**
