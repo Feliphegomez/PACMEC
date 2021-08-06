@@ -55,11 +55,12 @@ class Service extends \PACMEC\System\BaseRecords
       }
       if(count($this->gallery)==0) $this->gallery[] = infosite('default_picture');
       $this->thumb = $this->gallery[0];
-
+      /*
       foreach ($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('services_features')}` FEA", []) as $feature) {
         $feature->items = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('services_filters')}` FIL WHERE FIL.`service` IN (?) AND FIL.`feature` IN (?)", [$this->id, $feature->id]);
         $this->features[] = $feature;
       }
+      */
   		$rating = \PACMEC\System\Ratign::get_all_uri(infosite('siteurl').$this->link_view, false);
   		$this->rating_number = $rating->rating_number;
   		$this->rating_porcen = $rating->rating_porcen;

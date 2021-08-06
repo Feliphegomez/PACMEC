@@ -160,6 +160,77 @@ Class PacmecController extends \PACMEC\System\ControladorBase
   	return $this->goReturn();
   }
 
+  public function infoProducts($data)
+  {
+    if(is_array($data)) $data = (object) $data;
+    if(!isset($data->domain)) $data->domain = $GLOBALS['PACMEC']['host'];
+    $this->details = "Revisando dominio: {$data->domain}";
+    $this->response = (object) [
+      "products" => 0,
+      "products_alert" => 0,
+      "products_in_shoppings_carts" => 0,
+      "products_sales" => 0,
+
+      "stock" => 0,
+      "stock_in_shoppings_carts" => 0,
+      "stock_sales" => 0,
+
+      # "products_ids" => [],
+      "products_alert_ids" => [],
+      "products_in_shoppings_carts_ids" => [],
+    ];
+
+    $sql = "SELECT
+      COUNT(`P`.`id`) AS `products`
+      , SUM(`P`.`available`) AS `stock`
+      , COUNT(CASE WHEN (`P`.`available`<=5) THEN `P`.`id` END) AS `products_alert`
+      , COUNT(`SC`.`id`) AS `products_in_shoppings_carts`
+      , SUM(`SC`.`quantity`) AS `stock_in_shoppings_carts`
+      #, GROUP_CONCAT(`P`.`id`) AS `products_ids`
+      , GROUP_CONCAT(CASE WHEN (`P`.`available`<=5) THEN `P`.`id` END) AS `products_alert_ids`
+      , GROUP_CONCAT(`SC`.`ref_id`) AS `products_in_shoppings_carts_ids`
+    FROM `{$GLOBALS['PACMEC']['DB']->getTableName('products')}` `P`
+    LEFT JOIN `px_shoppings_carts` `SC` ON `SC`.`ref_id` = `P`.`id` AND `SC`.`type` = 'product'
+    WHERE `P`.`host` IN (?)
+    ";
+    $products = $GLOBALS['PACMEC']['DB']->FetchObject($sql, [$data->domain]);
+    if($products !== false) {
+      $this->response->products = $products->products;
+      $this->response->stock = $products->stock;
+      $this->response->products_alert = $products->products_alert;
+      $this->response->products_in_shoppings_carts = $products->products_in_shoppings_carts;
+      $this->response->stock_in_shoppings_carts = $products->stock_in_shoppings_carts;
+      # $this->response->products_ids = explode(',', $products->products_ids);
+      $this->response->products_alert_ids = explode(',', $products->products_alert_ids);
+      $this->response->products_in_shoppings_carts_ids = explode(',', $products->products_in_shoppings_carts_ids);
+      # foreach ($products as $k => $v)
+        # $this->response->{$k} = (!empty($v) ? $v : $this->response->{$k})
+      $this->error = false;
+    };
+
+    $sql2 = "SELECT GROUP_CONCAT(`OC`.`id`) as `ids`
+    FROM `{$GLOBALS['PACMEC']['DB']->getTableName('orders')}` `OC`
+    WHERE `OC`.`host` IN (?) AND `OC`.`closed` IS NOT NULL AND `OC`.`sales_omit` IN (0)
+    ";
+    $orders_closed = $GLOBALS['PACMEC']['DB']->FetchObject($sql2, [$data->domain]);
+
+    if($orders_closed !== false){
+      $sql3 = "SELECT `OI`.*
+        FROM `{$GLOBALS['PACMEC']['DB']->getTableName('orders_items')}` `OI`
+        WHERE `OI`.`order_id` IN (?) AND `OI`.`type` IN ('product')
+      ";
+      $orders_items = $GLOBALS['PACMEC']['DB']->FetchAllObject($sql3, [$orders_closed->ids]);
+      if($orders_items !== false){
+        foreach ($orders_items as $item) {
+          $this->response->products_sales += $item->quantity;
+          $this->response->stock_sales += $item->quantity * $item->unit_price;
+        }
+      }
+    }
+    #if($this->response !== false) $this->error = false;
+    return $this->goReturn();
+  }
+
   public function createShop($data)
   {
     if(is_array($data)) $data = (object) $data;

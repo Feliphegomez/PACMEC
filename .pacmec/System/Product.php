@@ -15,6 +15,7 @@ class Product extends \PACMEC\System\BaseRecords
   const TABLE_NAME = 'products';
   const COLUMNS_AUTO_T  = [
   ];
+	public $host          = null;
 	public $in_promo      = false;
 	public $price         = 0.00;
 	public $link_view     = "#";

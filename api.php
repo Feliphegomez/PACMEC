@@ -8385,7 +8385,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $condition = new NoCondition();
             $table = $this->reflection->getTable($tableName);
             foreach ($pairs as $k => $v) {
-                $condition = $condition->_and(new ColumnCondition($table->getColumn($k), 'eq', $v));
+              #if(is_array($v)) $v = implode(',', $v);
+              $v_n = (is_array($v)) ? implode(',', $v) : $v;
+              $cs = (is_array($v)) ? 'in' : 'eq';
+              $condition = $condition->_and(new ColumnCondition($table->getColumn($k), $cs, $v_n));
             }
             return $condition;
         }
@@ -11928,6 +11931,32 @@ namespace Tqdev\PhpCrudApi {
       'customization.afterHandler' => function ($operation, $tableName, $response, $environment) {
         return $response->withHeader('X-Time-Taken', microtime(true) - $environment->start);
       },
+      /*
+      'multiTenancy.handler' => function ($operation, $tableName) {
+        if(\isUser()){
+          $sites = [];
+          foreach ($_SESSION['sites'] as $site) {
+          $sites[] = $site->domain;
+          }
+          #echo json_encode($_SESSION, JSON_PRETTY_PRINT);
+          #exit;
+          return [
+          'host' => $sites
+          ];
+        }
+        if($_SERVER['SERVER_NAME'] == 'pacmec.com.co'){
+          return [];
+        } else {
+          return [
+            'host' => $_SERVER['SERVER_NAME']
+          ];
+        }
+
+        return [
+          'host' => $_SERVER['SERVER_NAME']
+        ];
+      },
+      */
     ]);
 
     $request = RequestFactory::fromGlobals();
