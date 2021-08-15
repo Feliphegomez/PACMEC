@@ -8,7 +8,6 @@
  * @license    license.txt
  * @version    0.0.1
  */
-
 try {
   // PACMEC VAR Global
   global $PACMEC;

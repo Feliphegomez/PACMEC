@@ -186,7 +186,7 @@ class Session
     $user_id = $user_id!==null ? $user_id : \userID();
     //$tbl = $GLOBALS['PACMEC']['DB']->getTableName('users');
     //$dataUser = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$tbl}` WHERE `id`=? ", [ $user_id ]);
-    $this->setAll(new \PACMEC\System\Users((object) ['user_id'=>$user_id]));
+    $this->setAll(new \PACMEC\System\User((object) ['user_id'=>$user_id]));
     return $this;
   }
 
@@ -224,7 +224,7 @@ class Session
  			}
  		}
     // Cargar Sitios del usuario
-    $this->sites = \PACMEC\System\Site::getByMe();
+    $this->sites = \PACMEC\System\UserSite::getByMe();
     /*
     $users_sites = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('users_sites')}` WHERE `user` IN (?)", [$this->user->id]);
     $sites = [];
@@ -314,7 +314,7 @@ class Session
       $this->notifications[] = $item;
     }
 
-
+    $this->emails_boxes = \PACMEC\System\eMailsBoxes::load_users_by('user_id', \userID());
 
     foreach ($this as $k => $v) {
       $_SESSION[$k] = is_object($v) ? (Array) $v : $v;

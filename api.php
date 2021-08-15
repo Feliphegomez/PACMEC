@@ -11902,6 +11902,9 @@ namespace Tqdev\PhpCrudApi {
       #'driver' => DB_driver,
       #'address' => DB_host,
       #'port' => DB_port,
+
+      #'debug' => true,
+
       'username' => DB_user,
       'password' => DB_pass,
       'database' => DB_database,

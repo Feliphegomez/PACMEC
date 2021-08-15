@@ -12,10 +12,10 @@
 function siteinfo($option_name)
 {
   global $PACMEC;
-  if(!isset($PACMEC['options'][$option_name])){
-    return 'NaN';
+  if(!isset($PACMEC['site']->settings[$option_name])){
+    return "NaN - {$option_name} - NaN";
   }
-  return @html_entity_decode($PACMEC['options'][$option_name]);
+  return @html_entity_decode($PACMEC['site']->settings[$option_name]);
 }
 
 function infosite($option_name)
@@ -642,10 +642,10 @@ function pacmec_foot()
     echo '
       function pacmec_run(){
         console.log("pacmec_run");
-        $notifications = Þ(".pacmec-change-status-notification-fast").on("click", (elm)=>{
-          let data = Þ(elm.currentTarget).data();
+        $notifications = $(".pacmec-change-status-notification-fast").on("click", (elm)=>{
+          let data = $(elm.currentTarget).data();
           if(data.notification_id){
-            Þ("#pacmec-change-status-notification-fast-icon-"+data.notification_id).attr("class", "fa fa-spinner fa-spin")
+            $("#pacmec-change-status-notification-fast-icon-"+data.notification_id).attr("class", "fa fa-spinner fa-spin")
             let url = "'.infosite('siteurl').'/?controller=Pacmec&action=notifications_change_status_fast&notification_id="+data.notification_id+"&redirect="+location.href;
             // console.log("url", url);
             fetch(url)
@@ -653,9 +653,9 @@ function pacmec_foot()
             .then(r => {
               console.log("r", r);
               if(r.error == false){
-                Þ("#pacmec-change-status-notification-fast-icon-"+data.notification_id).attr("class", r.data);
-                Þ(".pacmec-user-notifications-count").each((a,b) => {
-                  $child = Þ(b);
+                $("#pacmec-change-status-notification-fast-icon-"+data.notification_id).attr("class", r.data);
+                $(".pacmec-user-notifications-count").each((a,b) => {
+                  $child = $(b);
                   console.log("a", a);
                   console.log("b", b);
                   console.log("$child", $child);
@@ -764,7 +764,7 @@ function pacmec_tbl_exist($slug_gbl) : bool
   return isset($tables_ckecks[$slug_gbl]);
 }
 
-function randString($length) {
+function randString($length=11) {
   $char = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   $char = @str_shuffle($char);
   for($i = 0, $rand = '', $l = @strlen($char) - 1; $i < $length; $i ++) {

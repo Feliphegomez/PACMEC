@@ -19,12 +19,12 @@ class BaseRecords
   private $rules         = [];
   private $labels        = [];
 
-  public function __construct()
+  public function __construct($loadColumns=true)
   {
     try {
       //$class = get_called_class();
       if(Self::link()==null){ throw new \Exception("Conexion DB no encontrada."); }
-      $this->loadColumns();
+      if($loadColumns == true) $this->loadColumns();      
     } catch (\Exception $e) {
       echo $e->getMessage();
       return $e;
@@ -96,12 +96,10 @@ class BaseRecords
       $table = get_called_class()::TABLE_NAME;
       $result = $PACMEC['DB']->get_table_info($table);
       // if(isset($PACMEC['DB']->get_tables_info()[$table]) && isset($PACMEC['DB']->get_tables_info()[$table]->model)) $result = $PACMEC['DB']->get_tables_info()[$table]->model;
-
       if($result !== null){
         $this->columns       = $result->columns;
         $this->rules         = $result->rules;
         $this->labels        = $result->labels;
-
         foreach ($result->model as $k => $v) {
           $this->{$k} = $v;
         }

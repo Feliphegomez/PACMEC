@@ -14,18 +14,8 @@ function pacmec_ERP_activation()
 {
   try {
     require_once 'includes/definitions.php';
-    require_once 'models/eMailsBoxes.php';
     require_once 'includes/shortcodes.php';
-    $tbls = [
-      'emails_boxes',
-      'emails_users',
-    ];
-    foreach ($tbls as $tbl) {
-      if(!pacmec_tbl_exist($tbl)){
-        throw new \Exception("Falta la tbl: {$tbl}", 1);
-      }
-    }
-    $GLOBALS['PACMEC']['session']->emails_boxes = \PACMEC\ERP\eMailsBoxes::load_users_by('user_id', \userID());
+    
   } catch (\Exception $e) {
     echo $e->getMessage();
     exit;

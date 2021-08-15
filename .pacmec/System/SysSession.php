@@ -47,9 +47,8 @@ class SysSession implements \SessionHandlerInterface {
   public function read($id) {
   	try {
       if(in_array($GLOBALS['PACMEC']['ip'], Self::IPS_BANNED)) return "";
-  		$result = $this->link->FetchObject("SELECT `session_data` FROM `{$GLOBALS['PACMEC']['DB']->getTableName('sessions')}` WHERE `session_id`=? AND `session_expires`>=? AND `ip`=? AND `host`=?", [
+  		$result = $this->link->FetchObject("SELECT `session_data` FROM `{$GLOBALS['PACMEC']['DB']->getTableName('sessions')}` WHERE `session_id`=? AND `session_expires`>=? AND `host`=?", [
         $id, date('Y-m-d H:i:s'),
-        $GLOBALS['PACMEC']['ip'],
         $GLOBALS['PACMEC']['host']
       ]);
   		if($result !== false && isset($result->session_data)){ return $result->session_data; } else { return ""; }

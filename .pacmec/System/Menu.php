@@ -29,7 +29,7 @@ class Menu extends ModeloBase {
 
 	public function getBy($column='id', $val=""){
 		try {
-			return $this->setAll($GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$this->getTable()}` WHERE `{$column}`=? AND `host` IN ('*', ?)", [$val, $GLOBALS['PACMEC']['host']]));
+			return $this->setAll($GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$this->getTable()}` WHERE `{$column}`=? AND `host` IN (?, '*') ORDER BY `host` DESC LIMIT 1", [$val, $GLOBALS['PACMEC']['host']]));
 		}
 		catch(Exception $e){
 			return $this;

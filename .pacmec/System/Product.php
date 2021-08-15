@@ -26,6 +26,7 @@ class Product extends \PACMEC\System\BaseRecords
 	public $features      = [];
 	public $rating_number = 0;
 	public $rating_porcen = 0;
+	public $votes         = 0;
 
   public function __construct($opts=null)
   {
@@ -64,6 +65,7 @@ class Product extends \PACMEC\System\BaseRecords
   		$rating = \PACMEC\System\Ratign::get_all_uri(infosite('siteurl').$this->link_view, false);
   		$this->rating_number = $rating->rating_number;
   		$this->rating_porcen = $rating->rating_porcen;
+  		$this->votes  = ($rating->count);
     }
   }
 
@@ -71,6 +73,12 @@ class Product extends \PACMEC\System\BaseRecords
   {
     $sql = "DELETE FROM `{$GLOBALS['PACMEC']['DB']->getTableName(SELF::TABLE_NAME)}` WHERE  `id`=?";
     return $GLOBALS['PACMEC']['DB']->FetchObject($sql, [$this->id]);
+  }
+
+  public static function prices_min_max()
+  {
+    $sql = "SELECT MIN(`price_normal`) AS `price_min`, MAX(`price_normal`) AS `price_max` FROM `{$GLOBALS['PACMEC']['DB']->getTableName(SELF::TABLE_NAME)}` WHERE `host` IN ".(\siteinfo('domain_estrict')==false ? "('*', ?)" : "(?)");
+    return $GLOBALS['PACMEC']['DB']->FetchObject($sql, [$GLOBALS['PACMEC']['host']]);
   }
 
   public static function table_list_html(array $items) : String

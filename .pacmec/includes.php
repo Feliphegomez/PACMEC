@@ -18,48 +18,49 @@ class Autoload
     define('PACMEC_HOST', $_SERVER['SERVER_NAME']);
     if(!isset($GLOBALS['PACMEC'])) {
       global $PACMEC;
-
-      $PACMEC['settings']['domain']         = $_SERVER['SERVER_NAME'];
-      $PACMEC['settings']['lang']           = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
+      $PACMEC['settings']['domain']         = $PACMEC['host']                       = $_SERVER['SERVER_NAME'];
+      $PACMEC['settings']['lang-detect']    = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
       $PACMEC['settings']['server_address'] = $_SERVER['SERVER_ADDR'];
-      $PACMEC['settings']['remote_address'] = (!empty($_SERVER['HTTP_CLIENT_IP'])) ? $_SERVER['HTTP_CLIENT_IP'] : ((!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
-
-      $PACMEC['autoload'] = [
-        "classes"     => [],
-        "dictionary"     => [],
-      ];
+      $PACMEC['settings']['remote_address'] = $PACMEC['ip']                         = (!empty($_SERVER['HTTP_CLIENT_IP'])) ? $_SERVER['HTTP_CLIENT_IP'] : ((!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
       $PACMEC['hooks'] = null;
       $PACMEC['DB'] = null;
-      $PACMEC['ip'] = null;
-      $PACMEC['gateways'] = [
-        'payments'=>[]
-      ];
-      $PACMEC['host'] = null;
-      $PACMEC['fullData'] = null;
-      $PACMEC['permanents_links'] = [];
-      $PACMEC['types_options'] = [];
       $PACMEC['lang'] = null;
       $PACMEC['path_orig'] = null;
       $PACMEC['path'] = null;
+      $PACMEC['route'] = null;
+      $PACMEC['site'] = null;
+      $PACMEC['fullData'] = [];
+
+      $PACMEC['session'] = null;
+      $PACMEC['permanents_links'] = [];
+      $PACMEC['alerts'] = [];
+      $PACMEC['dictionary'] = [];
       $PACMEC['glossary'] = null;
       $PACMEC['website'] = [
         "meta" => [],
         "scripts" => ["head"=>[],"foot"=>[],"list"=>[]],
         "styles" => ["head"=>[],"foot"=>[],"list"=>[]]
       ];
-      $PACMEC['session'] = null;
-      $PACMEC['theme'] = [];
-      $PACMEC['themes'] = [];
-      $PACMEC['plugins'] = [];
-      $PACMEC['options'] = [];
-      $PACMEC['alerts'] = [];
+
       $PACMEC['total_records'] = [];
+      $PACMEC['themes'] = [];
+      $PACMEC['gateways'] = [
+        'payments'=>[]
+      ];
+      $PACMEC['autoload'] = [
+        "classes"     => [],
+        "dictionary"     => [],
+      ];
+      /*
+      $PACMEC['types_options'] = [];
+      $PACMEC['alerts'] = [];
       $PACMEC['route'] = null;
       $PACMEC['menus'] = [];
       $PACMEC['geo'] = [
         "countries" => [],
         "cities"    => [],
       ];
+      */
     }
   }
 

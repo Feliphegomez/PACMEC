@@ -8,7 +8,6 @@
  * @license    license.txt
  * @version    1.0.1
  */
-
 function pacmec_menu_item_to_li($item1, $classItem=[], $attsItem=[], $tree = true, $enable_tag = true, $enable_icon_m = true, $class_ul_child=[], $classSubitem=[], $attsSubitem=[])
 {
   $icon = "";
@@ -4822,3 +4821,39 @@ function pacmec_admin_clients_table($atts, $content="")
   return $html;
 }
 add_shortcode('pacmec-admin-clients-table', 'pacmec_admin_clients_table');
+
+function pacmec_widget_comments($atts, $content="")
+{
+  global $PACMEC;
+  $r = "";
+  $args = shortcode_atts([
+    'class' => ''
+  ], $atts);
+  if (infosite('comments_enabled')==true && $PACMEC['route']->comments_enabled):
+    $items = "";
+    foreach ($PACMEC['route']->comments as $comment):
+      $items .= \PACMEC\Util\Html::tag('div',
+        \PACMEC\Util\Html::tag('a',
+          \PACMEC\Util\Html::tag('img', "", ['author-thumb'], ["src"=>"/.pacmec/themes/destry/assets/images/blog/thumb/1.jpg"], true)
+        , ['author-thumb'], ["href"=>"#"])
+        . \PACMEC\Util\Html::tag('div',
+          \PACMEC\Util\Html::tag('p', $comment->comment, ['mb-1'])
+          .\PACMEC\Util\Html::tag('div',
+            \PACMEC\Util\Html::tag('span',
+              \PACMEC\Util\Html::tag('a', \PACMEC\Util\Html::tag('strong', $comment->display_name, []), [], ["href"=>"#"])
+            , ['author'])
+          , ['comment-footer d-flex justify-content-between'])
+        , ['comments-info'])
+      , ['single-comment-wrap mb-10']);
+    endforeach;
+    $area = \PACMEC\Util\Html::tag('div',
+      \PACMEC\Util\Html::tag('h3', count($PACMEC['route']->comments)." ".__a('reviews_or_comments').$items, ['title mb-6'])
+    , ['comment-area-wrapper mt-5'], ["data-aos"=>"fade-up", "data-aos-delay"=>"400"]);
+    $form = \PACMEC\Util\Html::tag('div',
+      \PACMEC\Util\Html::tag('div', do_shortcode("[pacmec-comment-form][/pacmec-comment-form]"), ['comment-box'])
+    , ['blog-comment-form-wrapper mt-10'], ["data-aos"=>"fade-up", "data-aos-delay"=>"400"]);
+    $r .= $area.$form;
+  endif;
+  return $r;
+}
+add_shortcode('pacmec-widget-comments', 'pacmec_widget_comments');

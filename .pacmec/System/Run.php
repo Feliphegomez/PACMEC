@@ -15,22 +15,23 @@ class Run
 {
   public function __construct()
   {
+    global $PACMEC;
     require_once PACMEC_PATH . '/functions.php';
     Self::pacmec_create_globals_vars();
-    Self::pacmec_checker_domain();
     Self::pacmec_init_setup();
+    Self::pacmec_checker_domain();
     Self::pacmec_init_options();
     Self::pacmec_init_files_includes();
+    Self::pacmec_assets_globals();
+    Self::pacmec_init_themes();
     Self::pacmec_run_session();
-    Self::pacmec_init_session();
     Self::pacmec_init_gateways();
     Self::pacmec_init_plugins_actives();
-    Self::pacmec_init_themes();
     Self::pacmec_init_route();
     Self::pacmec_validate_route();
-    Self::pacmec_theme_check();
-    Self::pacmec_assets_globals();
+
     Self::pacmec_run_ui();
+    # echo json_encode($PACMEC, JSON_PRETTY_PRINT);
   }
 
   /**
@@ -46,62 +47,26 @@ class Run
     {
       $PACMEC['hooks'] = \PACMEC\System\Hooks::getInstance();
       $PACMEC['DB'] = \PACMEC\System\DB::conexion();
-      $PACMEC['ip'] = Self::get_ip_address();
-      $PACMEC['host'] = $_SERVER['SERVER_NAME'];
-      $PACMEC['fullData'] = Self::get_data_full();
       $PACMEC['lang'] = Self::get_detect_lang();
+      $PACMEC['site'] = new \PACMEC\System\Site(['host' => $PACMEC['host']]);
+      $PACMEC['fullData'] = Self::get_data_full();
       $PACMEC['path_orig'] = \str_replace([PACMEC_HOST], '', isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_SERVER['REQUEST_URI']);
       $PACMEC['path'] = \strtok($PACMEC['path_orig'], '?');
       $PACMEC['glossary'] = Self::get_langs_http();
-      $PACMEC['theme'] = [];
-      $PACMEC['plugins'] = [];
-      $PACMEC['options'] = [];
-      $PACMEC['alerts'] = [];
-      $PACMEC['total_records'] = $PACMEC['DB']->getTotalRows();
-      $PACMEC['route'] = new \PACMEC\System\Route();
-      return;
+      $PACMEC['total_records'] = $PACMEC['site']->getTotalRows();
+      foreach($PACMEC['DB']->FetchAllObject("SELECT * FROM `{$PACMEC['DB']->getTableName('permanents_links')}` WHERE `host` IN (?,?) ", ['*', $PACMEC['host']]) as $option) $PACMEC['permanents_links'][$option->slug] = urlencode(__a($option->result));
       if(!empty($PACMEC['fullData']['lang'])){
         exit("Ups en Run::pacmec_create_globals_vars");
         $PACMEC['lang'] = in_array($PACMEC['fullData']['lang'], \array_keys($PACMEC['glossary'])) ? $PACMEC['fullData']['lang'] : (!empty($_COOKIE['language']) ? $_COOKIE['language'] : PACMEC_LANG_DEF);
         $PACMEC['glossary'] = Self::get_langs_http();
       }
+      return;
     } else {
       exit("Servidor no autorizado. ");
     }
   }
 
-  /**
-  * Validacion del dominio
-  *
-  * @author FelipheGomez <feliphegomez@gmail.com>
-  */
-  public static function pacmec_checker_domain() : void
-  {
-    global $PACMEC;
-    try {
-      $sql = "SELECT * FROM `{$PACMEC['DB']->getTableName('sites')}` WHERE `domain` IN (?)";
-      $a = $PACMEC['DB']->FetchObject($sql, [$PACMEC['settings']['domain']]);
-      if($a !== false && isset($a->ip_server))
-      {
-        if($a->ip_server == $PACMEC['settings']['server_address']) {
-          #echo json_encode($a);
-        } else {
-          throw new \Exception("domain_no_auth", 1);
-        }
-      }
-      else {
-        throw new \Exception("domain_no_auth", 1);
-      }
-    } catch (\Exception $e) {
-      if($e->getMessage()=='domain_no_auth'){
-        echo "Dominio no autorizado o no está configurado correctamente, consulte nuestra <a href=\"#\">documentación</a>.\n";
-      } else {
-        echo $e->getMessage();
-      }
-      exit;
-    }
-  }
-
+  // OK
   public static function pacmec_init_setup()
   {
     try {
@@ -116,10 +81,13 @@ class Run
         'clients'              => false,
         'comments'             => false,
         'coupons_codes'        => false,
+        'establishments'       => false,
+        'establishments_types' => false,
         'emails_boxes'         => false,
         'emails_templates'     => false,
         'emails_users'         => false,
         # 'expenses'             => false,
+        'features'    => false,
         'geo_addresses'        => false,
         'geo_cities'           => false,
         'geo_countries'        => false,
@@ -140,6 +108,7 @@ class Run
         'orders_status'        => false,
         'tasks'                => false,
         'tasks_activity'       => false,
+        'measurement_units'    => false,
         'orders_tx'            => false,
         'payments'             => false,
         'permanents_links'     => false,
@@ -150,8 +119,9 @@ class Run
         'posts'                => false,
         'products'             => false,
         'products_categories'  => false,
+        'products_conditions'  => false,
         'products_features'    => false,
-        'products_filters'     => false,
+        #'products_filters'     => false,
         'products_pictures'    => false,
         'routes'               => false,
         'services'             => false,
@@ -183,34 +153,31 @@ class Run
     }
   }
 
+  /**
+  * Validacion del dominio
+  *
+  * @author FelipheGomez <feliphegomez@gmail.com>
+  */
+  public static function pacmec_checker_domain() : void
+  {
+    global $PACMEC;
+    try {
+      $sql = "SELECT * FROM `{$PACMEC['DB']->getTableName('sites')}` WHERE `domain` IN (?)";
+      $a = $PACMEC['DB']->FetchObject($sql, [$PACMEC['settings']['domain']]);
+      if(!$PACMEC['site']->isValid()) throw new \Exception("domain_no_create", 1);
+      if(!$PACMEC['site']->isActive()) throw new \Exception("domain_no_auth", 1);
+    } catch (\Exception $e) {
+      if($e->getMessage()=='domain_no_create') echo "Dominio existe, consulte nuestra <a href=\"#\">documentación</a>.\n";
+      elseif($e->getMessage()=='domain_no_auth') echo "Dominio no autorizado o no está configurado correctamente, consulte nuestra <a href=\"#\">documentación</a>.\n";
+      else echo $e->getMessage();
+      exit;
+    }
+  }
+
   public static function pacmec_init_options()
   {
     try {
       global $PACMEC;
-      foreach($PACMEC['DB']->FetchAllObject("SELECT * FROM `{$PACMEC['DB']->getTableName('options')}` WHERE `host` IN (?,?) ORDER BY `host` ASC, `option_name` ASC ", ['*', $PACMEC['host']]) as $option){
-        $PACMEC['options'][$option->option_name] = Self::pacmec_parse_value($option->option_value);
-      }
-      foreach($PACMEC['DB']->FetchAllObject("SELECT * FROM `{$PACMEC['DB']->getTableName('permanents_links')}` WHERE `host` IN (?,?) ", ['*', $PACMEC['host']]) as $option){
-        $PACMEC['permanents_links'][$option->slug] = urlencode(__a($option->result));
-      }
-
-      /*
-      foreach($PACMEC['DB']->FetchAllObject("SELECT * FROM `{$PACMEC['DB']->getTableName('types_options')}` ORDER BY `name` ASC", []) as $option){
-        if(!isset($PACMEC['types_options'][$option->type])){
-          $PACMEC['types_options'][$option->type] = [];
-        }
-        $option->name = ($option->autot==1) ? __a($option->name) : $option->name;
-        $PACMEC['types_options'][$option->type][] = $option;
-      }
-      foreach($PACMEC['DB']->FetchAllObject("SELECT * FROM `{$PACMEC['DB']->getTableName('geo_countries')}` ORDER BY `name` ASC ", []) as $option){
-        // $PACMEC['geo']['countries'][$option->code] = $option;
-        $PACMEC['geo']['countries'][] = $option;
-      }
-      foreach($PACMEC['DB']->FetchAllObject("SELECT * FROM `{$PACMEC['DB']->getTableName('geo_cities')}` ORDER BY `name` ASC ", []) as $option){
-        if(!isset($PACMEC['geo']['cities'][$option->country_code])) $PACMEC['geo']['cities'][$option->country_code] = [];
-        $PACMEC['geo']['cities'][$option->country_code][] = $option;
-      }
-      */
       $options_ckecks = [
         'address_in_users'            => false,
         'author'                      => false,
@@ -266,6 +233,7 @@ class Run
         'smtp_port'                   => false,
         'smtp_secure'                 => false,
         'smtp_user'                   => false,
+        'socials_links'              => false,
         'solvemedia_k_c'              => false,
         'solvemedia_k_h'              => false,
         'solvemedia_k_v'              => false,
@@ -298,28 +266,98 @@ class Run
   public static function pacmec_init_files_includes()
   {
     try {
-      require_once PACMEC_PATH . '/solvemedialib.php';
+      require_once PACMEC_PATH . '/libs/solvemedia/solvemedialib.php';
       require_once PACMEC_PATH . '/libs/PHPExcel.php';
       require_once PACMEC_PATH . '/actions.php';
       require_once PACMEC_PATH . '/shortcodes.php';
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       exit('Error en los archivos principales');
+    }
+  }
+
+  public static function pacmec_assets_globals()
+  {
+    add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/css/pacmec.css"."?&cache=".rand(),  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.91, false);
+    add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.90, false);
+
+    #add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/JsBarcode/dist/JsBarcode.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.99, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/sweetalert2/sweetalert2.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.99, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/vue/vue.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.98, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/vue/vue-router.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.97, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/axios/axios.js"."?&cache=".rand(),    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.96, false);
+    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/jquery/jquery.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+
+    //add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/tinymce/tinymce.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+    // add_scripts_head("https://cdn.tiny.cloud/1/h8v4hy380enoounirlpqjx93d3v9sz4191i9izx8lvhcczw4/tinymce/5/tinymce.min.js",   ["type"=>"text/javascript", "referrerpolicy"=>"origin"], 1, false);
+
+    // add_scripts_head("https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js",   ["referrerpolicy"=>"origin"], 1, false);
+    // add_scripts_head("https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js",   ["referrerpolicy"=>"origin"], 1, false);
+
+    //add_scripts_foot(folder_theme("zeiss")."/assets/scripts/jquery.min.js", ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.8, true);
+
+
+    #add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/Metro-UI-CSS/build/css/metro-all.min.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
+    #add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/Metro-UI-CSS/build/js/metro.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+    //add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/ckeditor/ckeditor.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+
+  }
+
+  public static function pacmec_init_themes()
+  {
+    global $PACMEC;
+    $path_theme = null;
+    $path = PACMEC_PATH."/themes";
+    $theme_def = $PACMEC['site']->theme;
+
+    if(is_dir("{$path}/{$theme_def}")){
+      $path_theme = "{$path}/{$theme_def}/{$theme_def}.php";
+    } else if(is_file("{$path}/{$theme_def}.php")){
+      $path_theme = "{$path}/{$theme_def}.php";
+    }
+
+    if(is_file($path_theme)){
+      $file_info = Self::validate_file($path_theme);
+      if(isset($file_info['theme_name'])){
+        $PACMEC['themes'][$file_info['text_domain']] = $file_info;
+        $PACMEC['themes'][$file_info['text_domain']]['active'] = false;
+        $PACMEC['themes'][$file_info['text_domain']]['path'] = dirname($path_theme);
+        $PACMEC['themes'][$file_info['text_domain']]['file'] = ($path_theme);
+        if(is_file($PACMEC['themes'][$file_info['text_domain']]['file'])){
+    			//require_once $path_theme;
+          //\activation_plugin($file_info['text_domain']);
+    		}
+      }
+      foreach(\glob($path."/*/*") as $file_path){
+        $dirname = dirname($file_path);
+        $name = str_replace(['.php'], [''], basename($file_path));
+        $file_info = Self::validate_file($file_path);
+        if(isset($file_info['theme_name'])){
+          $PACMEC['themes'][$file_info['text_domain']] = $file_info;
+          $PACMEC['themes'][$file_info['text_domain']]['active'] = false;
+          $PACMEC['themes'][$file_info['text_domain']]['path'] = $dirname;
+          $PACMEC['themes'][$file_info['text_domain']]['file'] = ($file_path);
+        }
+      }
+    }
+    else {
+      throw new \Exception("No existe el tema principal [{$theme_def}]. path: {$path_theme}", 1);
+      exit();
     }
   }
 
   public function pacmec_run_session()
   {
+    global $PACMEC;
     \session_set_save_handler(new \PACMEC\System\SysSession(), true);
     if(Self::is_session_started() === FALSE || \session_id() === ""){
       // session_name('pacmec');
       \session_start();
     }
-  }
-
-  public function pacmec_init_session()
-  {
-    global $PACMEC;
-    //$_SESSION['user']['id'] = 1;
     $PACMEC['session'] = new \PACMEC\System\Session();
   }
 
@@ -327,15 +365,6 @@ class Run
   {
     global $PACMEC;
     $PACMEC['gateways']['payments'] = new \PACMEC\System\PaymentGateways();
-  }
-
-  public static function pacmec_theme_check()
-  {
-    // VALIDAR QUE ESTE ACTIVO EL TEMA
-    if(isset($GLOBALS['PACMEC']['theme']['active']) && $GLOBALS['PACMEC']['theme']['active'] == true){
-    } else {
-      exit("El tema no existe.");
-    }
   }
 
   public static function pacmec_init_plugins_actives()
@@ -394,145 +423,12 @@ class Run
     }
   }
 
-  public static function pacmec_assets_globals()
-  {
-    add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/css/pacmec.css"."?&cache=".rand(),  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-    add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.99, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/sweetalert2/sweetalert2.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/vue/vue.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/vue/vue-router.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/axios/axios.js"."?&cache=".rand(),    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
-    // add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/js/sdk.js"."?&cache=".rand(),   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
-
-    add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/bootstrap-tagsinput/dist/bootstrap-tagsinput.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/inputmask/inputmask.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-
-    add_scripts_head(folder_theme("zeiss")."/assets/scripts/jquery.min.js", ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.8, true);
-
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/tinymce/tinymce.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-
-    // add_scripts_head("https://cdn.tiny.cloud/1/h8v4hy380enoounirlpqjx93d3v9sz4191i9izx8lvhcczw4/tinymce/5/tinymce.min.js",   ["type"=>"text/javascript", "referrerpolicy"=>"origin"], 1, false);
-
-    // add_scripts_head("https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js",   ["referrerpolicy"=>"origin"], 1, false);
-    // add_scripts_head("https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js",   ["referrerpolicy"=>"origin"], 1, false);
-
-    //add_scripts_foot(folder_theme("zeiss")."/assets/scripts/jquery.min.js", ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.8, true);
-
-
-    #add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/Metro-UI-CSS/build/css/metro-all.min.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-    #add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/Metro-UI-CSS/build/js/metro.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-
-    //add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/ckeditor/ckeditor.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-
-    if (infosite('grapesjs_enable')==true) {
-      add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/css/grapes.min.css"."?&cache=".rand(),  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-      # add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-webpage/grapesjs-preset-webpage.min.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-      add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-newsletter/grapesjs-preset-newsletter.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
-
-      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/grapes.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      # add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-webpage/grapesjs-preset-webpage.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-preset-newsletter/grapesjs-preset-newsletter.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      //add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-plugin-ckeditor/grapesjs-plugin-ckeditor.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-blocks-basic/grapesjs-blocks-basic.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-      # add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/grapesjs-0.17.3/plugins/grapesjs-blocks-bootstrap4/grapesjs-blocks-bootstrap4.min.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-
-    }
-  }
-
-  public static function pacmec_run_ui()
-  {
-    if(
-      isset($GLOBALS['PACMEC']['theme']['path'])
-      && is_file($GLOBALS['PACMEC']['theme']['path'] . '/index.php')
-      && file_exists($GLOBALS['PACMEC']['theme']['path'] . '/index.php')
-    )
-    {
-      $data = $GLOBALS['PACMEC']['fullData'];
-      if(isset($data['controller']))
-      {
-        $controllerObj = \cargarControlador($data["controller"]);
-        \lanzarAccion($controllerObj);
-      }
-      else
-      {
-        require_once $GLOBALS['PACMEC']['theme']['path'] . '/index.php';
-      }
-    } else {
-      throw new \Exception("Hubo un problema al ejecutar la Interfas de Usuario. {$GLOBALS['PACMEC']['theme']['text_domain']} -> index.php]", 1);
-      ;
-      exit;
-    }
-  }
-
-  public static function pacmec_validate_route()
-  {
-    if($GLOBALS['PACMEC']['route']->theme == null) $GLOBALS['PACMEC']['route']->theme = siteinfo('theme_default');
-    add_action('page_title', function(){ if(isset($GLOBALS['PACMEC']['route']->id)){ echo (pageinfo('page_title') !== 'NaN') ? _autoT(pageinfo('page_title')) : _autoT(pageinfo('title')); } });
-    add_action('page_description', function(){ if(isset($GLOBALS['PACMEC']['route']->id)){ echo (pageinfo('page_description') !== 'NaN') ? pageinfo('page_description') : _autoT(pageinfo('description')); } });
-    add_action('page_body', function(){
-    	if(isset($GLOBALS['PACMEC']['route']->request_uri) && $GLOBALS['PACMEC']['route']->request_uri !== ""){
-    		$GLOBALS['PACMEC']['route']->content = do_shortcode($GLOBALS['PACMEC']['route']->content);
-        echo $GLOBALS['PACMEC']['route']->content;
-    	}
-    	else {
-    		echo do_shortcode(
-    			errorHtml("Lo sentimos, no se encontro el archivo o página.", "Ruta no encontrada")
-    		);
-    	}
-    });
-  }
-
-  public static function pacmec_init_themes()
-  {
-    global $PACMEC;
-    $path_theme = null;
-    $path = PACMEC_PATH."/themes";
-    $theme_def = \siteinfo('theme_default');
-
-    if(is_dir("{$path}/{$theme_def}")){
-      $path_theme = "{$path}/{$theme_def}/{$theme_def}.php";
-    } else if(is_file("{$path}/{$theme_def}.php")){
-      $path_theme = "{$path}/{$theme_def}.php";
-    }
-
-    if(is_file($path_theme)){
-      $file_info = Self::validate_file($path_theme);
-      if(isset($file_info['theme_name'])){
-        $PACMEC['themes'][$file_info['text_domain']] = $file_info;
-        $PACMEC['themes'][$file_info['text_domain']]['active'] = false;
-        $PACMEC['themes'][$file_info['text_domain']]['path'] = dirname($path_theme);
-        $PACMEC['themes'][$file_info['text_domain']]['file'] = ($path_theme);
-        if(is_file($PACMEC['themes'][$file_info['text_domain']]['file'])){
-    			//require_once $path_theme;
-          //\activation_plugin($file_info['text_domain']);
-    		}
-      }
-      foreach(\glob($path."/*/*") as $file_path){
-        $dirname = dirname($file_path);
-        $name = str_replace(['.php'], [''], basename($file_path));
-        $file_info = Self::validate_file($file_path);
-        if(isset($file_info['theme_name'])){
-          $PACMEC['themes'][$file_info['text_domain']] = $file_info;
-          $PACMEC['themes'][$file_info['text_domain']]['active'] = false;
-          $PACMEC['themes'][$file_info['text_domain']]['path'] = $dirname;
-          $PACMEC['themes'][$file_info['text_domain']]['file'] = ($file_path);
-        }
-      }
-    }
-    else {
-      throw new \Exception("No existe el tema principal [{$theme_def}]. path: {$path_theme}", 1);
-      exit();
-    }
-  }
-
   public static function pacmec_init_route()
   {
     try {
       global $PACMEC;
-      $PACMEC['route'] = new \PACMEC\System\Route();
+      // $PACMEC['route'] = new \PACMEC\System\Route();
+
 
       switch ($PACMEC['path']) {
         case '/pacmec-api':
@@ -560,16 +456,16 @@ class Run
         }
         break;
         default:
-        $PACMEC['route']->getBy('request_uri', $PACMEC['path']);
+        $PACMEC['route'] = new \PACMEC\System\Route(['request_uri'=>$PACMEC['path']]);
+        # $PACMEC['route']->getBy('request_uri', $PACMEC['path']);
         if($PACMEC['route']->id <= -1){
           $s_path = __url_s_($PACMEC['path']);
-          $PACMEC['route']->getBy('request_uri', $s_path);
+          $PACMEC['route']->get_by('request_uri', $s_path);
         }
         \do_action('route_extends_path');
         if ($PACMEC['route']->permission_access !== null) {
           $check = \validate_permission($PACMEC['route']->permission_access);
           if($check == false){
-
             if(isUser()) {
               $PACMEC['route']->content = "[pacmec-errors title=\"route_no_access_title\" content=\"route_no_access_content\"][/pacmec-errors]";
             }
@@ -599,7 +495,7 @@ class Run
         "  ",
         ], " ", str_replace(["\r", "\t", "\n"], " ", strip_tags($GLOBALS['PACMEC']['route']->description)))
         ));
-        pacmec_add_meta_tag('keywords', ($GLOBALS['PACMEC']['route']->title).",".$GLOBALS['PACMEC']['route']->keywords);
+        pacmec_add_meta_tag('keywords', ($GLOBALS['PACMEC']['route']->title).",".implode(',', $GLOBALS['PACMEC']['route']->keywords));
       } else {
         pacmec_add_meta_tag('title', infosite('sitename'));
         pacmec_add_meta_tag('description', infosite('sitedescr'));
@@ -621,10 +517,59 @@ class Run
       if(pacmec_exist_meta('og:type')==false) pacmec_add_meta_tag('og:type', 'Website');
 
       pacmec_add_meta_tag('generator', 'PACMEC 1.0.1');
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       exit("{$e->getMessage()}\n");
     }
   }
+
+  public static function pacmec_validate_route()
+  {
+    if($GLOBALS['PACMEC']['route']->theme == null) $GLOBALS['PACMEC']['route']->theme = siteinfo('theme_default');
+    add_action('page_title', function(){ if(isset($GLOBALS['PACMEC']['route']->id)){ echo (pageinfo('page_title') !== 'NaN') ? _autoT(pageinfo('page_title')) : _autoT(pageinfo('title')); } });
+    add_action('page_description', function(){ if(isset($GLOBALS['PACMEC']['route']->id)){ echo (pageinfo('page_description') !== 'NaN') ? pageinfo('page_description') : _autoT(pageinfo('description')); } });
+    add_action('page_body', function(){
+    	if(isset($GLOBALS['PACMEC']['route']->request_uri) && $GLOBALS['PACMEC']['route']->request_uri !== ""){
+    		$GLOBALS['PACMEC']['route']->content = do_shortcode($GLOBALS['PACMEC']['route']->content);
+        echo $GLOBALS['PACMEC']['route']->content;
+    	}
+    	else {
+    		echo do_shortcode(
+    			errorHtml("Lo sentimos, no se encontro el archivo o página.", "Ruta no encontrada")
+    		);
+    	}
+    });
+  }
+
+  public static function pacmec_run_ui()
+  {
+    if(
+      isset($GLOBALS['PACMEC']['theme']['path'])
+      && is_file($GLOBALS['PACMEC']['theme']['path'] . '/index.php')
+      && file_exists($GLOBALS['PACMEC']['theme']['path'] . '/index.php')
+    )
+    {
+      $data = $GLOBALS['PACMEC']['fullData'];
+      if(isset($data['controller']))
+      {
+        $controllerObj = \cargarControlador($data["controller"]);
+        \lanzarAccion($controllerObj);
+      }
+      else
+      {
+        require_once $GLOBALS['PACMEC']['theme']['path'] . '/index.php';
+      }
+    } else {
+      throw new \Exception("Hubo un problema al ejecutar la Interfas de Usuario. {$GLOBALS['PACMEC']['theme']['text_domain']} -> index.php]", 1);
+      ;
+      exit;
+    }
+  }
+
+
+
+
+
 
   public static function is_session_started() : bool
   {
@@ -662,7 +607,6 @@ class Run
     	}
     }
   }
-
 
   public static function pacmec_parse_value($option_value)
   {

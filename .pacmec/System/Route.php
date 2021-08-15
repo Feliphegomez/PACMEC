@@ -11,8 +11,11 @@
 
 namespace PACMEC\System;
 
-class Route extends \PACMEC\System\ModeloBase
+class Route extends \PACMEC\System\BaseRecords
 {
+  const TABLE_NAME = 'routes';
+  const COLUMNS_AUTO_T  = [
+  ];
 	public $id = -1;
 	public $is_actived = 1;
 	public $parent = null;
@@ -25,7 +28,7 @@ class Route extends \PACMEC\System\ModeloBase
 	public $request_uri = '/404';
 	public $request_host = '/404';
 	public $layout = 'pages-error';
-	public $keywords = '';
+	public $keywords = [];
 	public $meta = [];
 	public $rating_number = 0;
 	public $rating_porcen = 0;
@@ -33,10 +36,11 @@ class Route extends \PACMEC\System\ModeloBase
 
 	public function __construct($args=[])
 	{
-		$args = (array) $args;
+    Parent::__construct(false);
+		$args = (object) $args;
 		parent::__construct("routes", false);
-		if(isset($args['id'])){ $this->getPublicBy('id', $args['id']); }
-		else if(isset($args['request_uri'])){ $this->getPublicBy('request_uri', $args['request_uri']); }
+		if(isset($args->id)){ $this->get_by('id', $args->id); }
+		else if(isset($args->request_uri)){ $this->get_by('request_uri', __url_s_($args->request_uri)); }
 	}
 
 	public static function encodeURIautoT(string $page_slug) : string
@@ -76,22 +80,17 @@ class Route extends \PACMEC\System\ModeloBase
 		return $r;
 	}
 
-	public function getBy($a,$b)
+	public function get_id($a)
 	{
-		return $this->getPublicBy($a,$b);
+		return $this->get_by('id',$a);
 	}
 
-	public function getById($a)
-	{
-		return $this->getPublicBy('id',$a);
-	}
-
-	public function getPublicBy($column='id', $val="")
+	public function get_by($column='id', $val="")
 	{
 		try {
 			global $PACMEC;
-			$this->setAll(Self::FetchObject(
-				"SELECT * FROM {$this->getTable()}
+			$this->set_all(Self::link()->FetchObject(
+				"SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName(SELF::TABLE_NAME)}`
 					WHERE `{$column}`=?
 					AND `host` IN ('*', ?) ORDER BY `host` desc
 					"
@@ -107,7 +106,7 @@ class Route extends \PACMEC\System\ModeloBase
 		}
 	}
 
-	function setAll($arg=null)
+	function set_all($arg=null)
 	{
 		global $PACMEC;
 		$redirect = (isset($_SERVER['HTTP_REFERER'])) ? $_SERVER['HTTP_REFERER'] : infosite("siteurl").$GLOBALS['PACMEC']['path'];
@@ -117,35 +116,34 @@ class Route extends \PACMEC\System\ModeloBase
 				$arg = (array) $arg;
 				switch ($arg['permission_access']) {
 					case null:
-						break;
+					break;
 					default:
-						$check = \validate_permission($arg['permission_access']);
-						if($check == false){
-							//if(\isGuest()){ $arg['layout'] = 'pages-signin'; } else { $arg['layout'] = 'pages-error'; }
-							//$arg['layout'] = 'pages-error';
-							$this->layout = 'pages-signin';
-							if(isUser()) $arg['content'] = "[pacmec-errors title=\"route_no_access_title\" content=\"route_no_access_content\"][/pacmec-errors]";
-							else $arg['content'] = ('[pacmec-form-signin redirect="'.infosite('siteurl').$PACMEC['path'].'"][/pacmec-form-signin]');
-						}
-						break;
+					$check = \validate_permission($arg['permission_access']);
+					if($check == false){
+						//if(\isGuest()){ $arg['layout'] = 'pages-signin'; } else { $arg['layout'] = 'pages-error'; }
+						//$arg['layout'] = 'pages-error';
+						$this->layout = 'pages-signin';
+						if(isUser()) $arg['content'] = "[pacmec-errors title=\"route_no_access_title\" content=\"route_no_access_content\"][/pacmec-errors]";
+						else $arg['content'] = ('[pacmec-form-signin redirect="'.infosite('siteurl').$PACMEC['path'].'"][/pacmec-form-signin]');
+					}
+					break;
 				}
 				foreach($arg as $k=>$v){
 					switch ($k) {
 						case 'page_slug':
-							$this->{$k} = \__url_s(SELF::encodeURIautoT($v));
-							break;
+						$this->{$k} = \__url_s(SELF::encodeURIautoT($v));
+						break;
 						default:
-							$this->{$k} = ($v);
-							break;
+						$this->{$k} = ($v);
+						break;
 					}
 				}
 			}
+
 			if(!$this->isValid()){
 				$_explo = explode('/', $GLOBALS['PACMEC']['path']);
 				$_exploder = [];
-				foreach ($_explo as $key => $value) {
-					if(!empty($value)) $_exploder[] = $value;
-				}
+				foreach ($_explo as $key => $value) if(!empty($value)) $_exploder[] = $value;
 				if (isset($_exploder[0]) && count($_exploder)==1 && $_exploder[0] === $GLOBALS['PACMEC']['permanents_links']['%pacmec_signin%']) {
 					$this->id = 1;
 					$this->request_uri = $GLOBALS['PACMEC']['path'];
@@ -153,32 +151,19 @@ class Route extends \PACMEC\System\ModeloBase
 					$this->layout = 'pages-signin';
 					$this->title = __a('signin');
 					//$this->setAll($PACMEC['route']);
-					/*
-					require_once PACMEC_PATH.'/.prv/forms/signin.php';
-					exit;
-					*/
-					if(\isUser()){
-						header("Location: ".$redirect);
-					}
-
-		      //
+					if(\isUser()) header("Location: ".$redirect);
 		      //echo "<meta http-equiv=\"refresh\" content=\"0; url={$redirect}\">";
-				} elseif (isset($_exploder[0]) && count($_exploder)==1 && $_exploder[0] === $GLOBALS['PACMEC']['permanents_links']['%forgotten_password_slug%']) {
+				}
+				elseif (isset($_exploder[0]) && count($_exploder)==1 && $_exploder[0] === $GLOBALS['PACMEC']['permanents_links']['%forgotten_password_slug%']) {
 					$this->id = 1;
 					$this->request_uri = $GLOBALS['PACMEC']['path'];
 					$this->theme = null;
 					$this->layout = 'pages-forgotten-password';
 					$this->title = __a('pacmec_forgotten_password');
 					//$this->setAll($PACMEC['route']);
-					/*
-					require_once PACMEC_PATH.'/.prv/forms/signin.php';
-					exit;
-					*/
 					if(\isUser()){
 						header("Location: ".$redirect);
 					}
-
-		      //
 		      //echo "<meta http-equiv=\"refresh\" content=\"0; url={$redirect}\">";
 				}
 				else if (isset($_exploder[0]) && count($_exploder)==1 && $_exploder[0] === $GLOBALS['PACMEC']['permanents_links']['%pacmec_meaccount%']) {
@@ -194,23 +179,24 @@ class Route extends \PACMEC\System\ModeloBase
 					$this->description = __a('me_account_descr');
 					$this->user = $GLOBALS['PACMEC']['session'];
 		      //echo "<meta http-equiv=\"refresh\" content=\"0; url={$redirect}\">";
-				} else {
+				}
+				else {
 					$this->layout = 'pages-error';
 					$this->content = "[pacmec-errors title=\"route_no_actived_title\" content=\"route_no_actived_content\"][/pacmec-errors]";
 				}
 			}
 		}
-		if(is_null($this->theme)) $this->theme = \infosite('theme_default');
-		if(\validate_theme($this->theme)==false) $this->theme = \infosite('theme_default');
+		if(is_null($this->theme)) $this->theme = $GLOBALS['PACMEC']['site']->theme;
+		if(\validate_theme($this->theme)==false) $GLOBALS['PACMEC']['site']->theme;
 		$acti = \activation_theme($this->theme);
 		if($this->id <= 0){
 			$this->layout = 'pages-error';
 			$this->content = "[pacmec-errors title=\"error_404_title\" content=\"error_404_content\"][/pacmec-errors]";
 		} else {
-			$this->keywords .= ','.infosite('sitekeywords');
+			#$this->keywords = ;
+			$this->keywords = array_merge($PACMEC['site']->keywords, explode(',', $this->keywords));
 			$this->title = __a($this->title);
 		}
-		if(empty($this->keywords)) $this->keywords = infosite('sitekeywords');
 		$this->load_ratings();
 	}
 
@@ -221,11 +207,6 @@ class Route extends \PACMEC\System\ModeloBase
 		$this->rating_number = $rating->rating_number;
 		$this->rating_porcen = $rating->rating_porcen;
 		$this->comments = $rating->votes;
-	}
-
-	public function isValid()
-	{
-		return $this->id > 0 ? true : false;
 	}
 
   public function getMeta()
