@@ -11903,7 +11903,7 @@ namespace Tqdev\PhpCrudApi {
       #'address' => DB_host,
       #'port' => DB_port,
 
-      #'debug' => true,
+      'debug' => true,
 
       'username' => DB_user,
       'password' => DB_pass,

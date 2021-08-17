@@ -58,10 +58,10 @@ Class Categories extends \PACMEC\System\ModeloBase {
     foreach ([
       "name" => [
         "s"      => "",
-        "autoT"  => true,
+        "autoT"  => false,
         "parts"  => [
-          "categories_",
-          $this->id,
+          // "categories_",
+          $this->slug,
         ]
       ],
       "price_range" => [

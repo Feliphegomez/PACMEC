@@ -282,7 +282,7 @@ class Run
     add_style_head(siteinfo('siteurl')   . "/.pacmec/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.90, false);
 
     #add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-    add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/JsBarcode/dist/JsBarcode.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.99, false);
+    // add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/JsBarcode/dist/JsBarcode.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.99, false);
     add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/sweetalert2/sweetalert2.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.99, false);
     add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/vue/vue.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.98, false);
     add_scripts_head(siteinfo('siteurl') . "/.pacmec/assets/dist/vue/vue-router.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.97, false);

@@ -2,129 +2,29 @@
 /**
  *
  * @package    PACMEC
- * @category   PIM
+ * @category   Stocktaking
  * @copyright  2020-2021 FelipheGomez & FelipheGomez CO
  * @author     FelipheGomez <feliphegomez@gmail.com>
  * @license    license.txt
- * @version    0.0.1
+ * @version    1.0.1
  */
 namespace PACMEC\System;
-#use PHPExcel\PHPExcel_IOFactory;
-class Product extends \PACMEC\System\BaseRecords
+class Stocktaking extends \PACMEC\System\BaseRecords
 {
-  const TABLE_NAME = 'products';
+  const TABLE_NAME = 'stocktaking';
   const COLUMNS_AUTO_T  = [
   ];
-	public $total                  = 0;
-	public $available              = 0;
-  public $price_in               = 0.00;
-  public $price_out              = 0.00;
-  public $price_r_in             = 0.00;
-  public $price_r_out            = 0.00;
-
-	public $host                   = null;
-	public $in_promo               = false;
-	public $price                  = 0.00;
-	public $link_view              = "#";
-	public $link_edit              = "#";
-	public $link_remove            = "#";
-	public $thumb                  = "";
-	public $gallery                = [];
-	public $features               = [];
-	public $categories             = [];
-	public $rating_number          = 0;
-	public $rating_porcen          = 0;
-	public $votes                  = 0;
 
   public function __construct($opts=null)
   {
     Parent::__construct();
     if(is_object($opts) && isset($opts->id)) $this->get_by_id($opts->id);
-    else if(is_object($opts) && isset($opts->ref)) $this->get_by('sku', $opts->ref);
-
   }
 
   public function set_all($obj)
   {
     Parent::set_all($obj);
     if($this->isValid()){
-      $this->common_names = @explode(',', $this->common_names);
-      $this->link_view = __url_S("/%products_view%/{$this->id}/".urlencode($this->name));
-      $this->link_edit   = __url_S("/%admin_products_slug%?product_id={$this->id}");
-      $this->link_remove = __url_S("/%admin_products_slug%?remove_product={$this->id}");
-
-      $inv_inicial = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('stocktaking')}` WHERE `product` IN (?) AND `type` IN ('initial') ORDER BY `id` DESC LIMIT 1", [$this->id]);
-      if($inv_inicial !== false){
-        $invs = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('stocktaking')}` WHERE `product` IN (?) AND `created` >= ? ORDER BY `id` ASC", [$this->id, $inv_inicial->created]);
-        if($invs !== false){
-          foreach ($invs as $inv) {
-            switch ($inv->type) {
-              case 'initial':
-                $this->total += $inv->quantity;
-                ####### $this->available += $inv->quantity;
-                $this->price_in += $inv->total;
-                break;
-              case 'purchase':
-                $this->total += $inv->quantity;
-                ####### $this->available += $inv->quantity;
-                $this->price_in += $inv->total;
-                // $this->price_purchase += ($inv->amount*$inv->quantity)/$inv->quantity;
-                break;
-              case 'return_sale':
-                // $this->total += $inv->quantity;
-                ####### $this->available += $inv->quantity;
-                $this->price_r_in += $inv->total;
-                break;
-              case 'sale':
-                ####### $this->available -= $inv->quantity;
-                $this->price_out += $inv->total;
-                break;
-              case 'return_purchase':
-                $this->total -= $inv->quantity;
-                ####### $this->available -= $inv->quantity;
-                $this->price_r_out += $inv->total;
-                #$this->price_sale_min += $inv->amount/$inv->quantity;
-                break;
-              default:
-                break;
-            }
-          }
-          if($this->price_in > 0 && $this->total > 0) $this->price_in = $this->price_in / $this->total;
-          if($this->price_out > 0 && $this->total > 0 && $this->available > 0) $this->price_out = $this->price_out / ($this->total - $this->available);
-
-        }
-      }
-
-      if($this->price_normal > $this->price_promo && $this->price_promo>0){
-        $this->in_promo = true;
-        $this->price = $this->price_promo;
-      } else {
-        $this->price = $this->price_normal;
-      }
-      $this->gallery = [];
-      foreach ($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('products_pictures')}` WHERE `product` IN (?) ORDER BY `ordering`", [$this->id]) as $picture)
-      {
-        $this->gallery[] = $picture->path_short;
-      }
-      if(count($this->gallery)==0) $this->gallery[] = infosite('default_picture');
-      $this->thumb = $this->gallery[0];
-
-      foreach ($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('products_features')}` FEA", []) as $feature) {
-        $feature->items = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('products_filters')}` FIL WHERE FIL.`product` IN (?) AND FIL.`feature` IN (?)", [$this->id, $feature->id]);
-        $this->features[] = $feature;
-      }
-      foreach ($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('products_categories')}` WHERE `product` IN (?) ", [$this->id]) as $category)
-      {
-        $category->category = new \PACMEC\System\Categories(['id'=>$category->category]);
-        $this->categories[] = $category;
-      }
-      $this->unid = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('measurement_units')}` WHERE `id` IN (?) ", [$this->unid]);
-      $this->condition = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getTableName('products_conditions')}` WHERE `id` IN (?) ", [$this->condition]);
-
-  		$rating = \PACMEC\System\Ratign::get_all_uri(infosite('siteurl').$this->link_view, false);
-  		$this->rating_number = $rating->rating_number;
-  		$this->rating_porcen = $rating->rating_porcen;
-  		$this->votes  = ($rating->count);
     }
   }
 
@@ -293,66 +193,6 @@ class Product extends \PACMEC\System\BaseRecords
   	}catch (Exception $e){
   		return 0;
   	}
-  }
-
-  public static function exportar2excel($items=[], $columns=[], $filename="nombredelfichero.xls", $format="Excel5")
-  {
-    $excel = new \PHPExcel();
-    $excel->setActiveSheetIndex(0);
-    $excel->getActiveSheet()->setTitle('PACMEC');
-
-    $row    = 1;
-    $column = 0;
-
-    foreach ($columns as $column_name) {
-      $excel->getActiveSheet()->setCellValue(\getNameFromNumberZero($column).$row, $column_name);
-      $excel->getActiveSheet()->getStyle(\getNameFromNumberZero($column).$row)->getFont()->setBold(true);
-      /*
-      $excel->getActiveSheet()->getStyle("{$letter}{$column}")->getFont()->setSize(14);
-      */
-      $column++;
-    }
-    $row++;
-
-    foreach ($items as $item) {
-      $column = 0;
-      foreach ($columns as $k) {
-        if(isset($item->{$k})){
-          if($k=='common_names'){
-            $tags = [];
-            foreach ($item->{$k} as $a) {
-              $tags[] = $a;
-            }
-            $excel->getActiveSheet()->setCellValue(
-              \getNameFromNumberZero($column).$row
-              , implode(',', $tags)
-            );
-            //implode(',', json_decode($item->{$k}[0]))
-          }
-          else {
-            $excel->getActiveSheet()->setCellValue(\getNameFromNumberZero($column).$row, $item->{$k});
-          }
-        }
-
-        $column++;
-      }
-      $row++;
-    }
-
-
-    $instance = \PHPExcel_IOFactory::createWriter($excel, $format);
-    if($format == "Excel2007"){ header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); }
-    else { header('Content-Type: application/vnd.ms-excel'); }
-
-    header("Expires: 0");
-    #header('Cache-Control: max-age=0'); //no cache
-    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-    header("Content-Type: application/force-download");
-    header("Content-Type: application/octet-stream");
-    header("Content-Type: application/download");;
-    header('Content-Disposition: attachment;filename="'.$filename.'";');
-
-    $instance->save('php://output');
   }
 
 }
